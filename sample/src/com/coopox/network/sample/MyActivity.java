@@ -2,10 +2,8 @@ package com.coopox.network.sample;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.os.Messenger;
+import android.net.Uri;
+import android.os.*;
 import android.util.Log;
 import android.view.View;
 import android.webkit.URLUtil;
@@ -37,6 +35,28 @@ public class MyActivity extends Activity implements View.OnClickListener {
         }
     };
 
+    private class DownloadReceiver extends ResultReceiver {
+        public DownloadReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+            super.onReceiveResult(resultCode, resultData);
+            Log.d("handleMessage", "Download Message: " + resultCode);
+            switch (resultCode) {
+                case DownloadService.MSG_UPDATE_PROGRESS:
+                    Number progress = (Number) resultData.get(DownloadService.KEY_PROGRESS);
+                    Log.d("handleMessage", "Downloaded " + progress + "%");
+                    mProgressBar.setProgress(progress.intValue());
+                    break;
+                case DownloadService.MSG_CANCELLED:
+                    mProgressBar.setProgress(0);
+                    break;
+            }
+        }
+    }
+
     /**
      * Called when the activity is first created.
      */
@@ -59,20 +79,23 @@ public class MyActivity extends Activity implements View.OnClickListener {
             case R.id.start:
                 if (URLUtil.isHttpUrl(url)) {
                     Intent intent = new Intent(this, DownloadService.class);
-                    intent.putExtra(DownloadService.EXTRA_URL, url);
+                    intent.setData(Uri.parse(url));
                     File dir = getExternalCacheDir();
                     File output = new File(dir, "test.tmp");
                     intent.putExtra(DownloadService.EXTRA_OUTPUT_PATH, output.getPath());
-                    intent.putExtra(DownloadService.EXTRA_MESSENGER, new Messenger(mResponseHandler));
+                    intent.putExtra(DownloadService.EXTRA_RECEIVER, new DownloadReceiver(new Handler()));
                     startService(intent);
                 }
                 break;
             case R.id.stop:
                 if (URLUtil.isHttpUrl(url)) {
                     Intent intent = new Intent(this, DownloadService.class);
-                    intent.putExtra(DownloadService.EXTRA_URL, url);
-                    intent.putExtra(DownloadService.EXTRA_STOP, true);
-                    intent.putExtra(DownloadService.EXTRA_MESSENGER, new Messenger(mResponseHandler));
+                    intent.setData(Uri.parse(url));
+                    intent.putExtra(DownloadService.EXTRA_CANCEL, true);
+                    File dir = getExternalCacheDir();
+                    File output = new File(dir, "test.tmp");
+                    intent.putExtra(DownloadService.EXTRA_OUTPUT_PATH, output.getPath());
+                    intent.putExtra(DownloadService.EXTRA_RECEIVER, new DownloadReceiver(new Handler()));
                     startService(intent);
                 }
                 break;
