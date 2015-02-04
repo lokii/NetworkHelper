@@ -166,13 +166,13 @@ public class DownloadService extends Service {
                 task.mConnection.setReadTimeout(READ_TIMEOUT);
                 task.mConnection.setInstanceFollowRedirects(true);
 
-                if (task.mConnection.getResponseCode() == 200) {
+                if (task.mConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     int totalSize = task.mConnection.getContentLength();
 
                     File outputFile = new File(task.mOutput);
                     outputStream = new FileOutputStream(outputFile);
 
-                    inputStream = task.mConnection.getInputStream();
+                    inputStream = new BufferedInputStream(task.mConnection.getInputStream());
 
                     byte[] buffer = new byte[CACHE_BLOCK_SIZE];
 
@@ -195,6 +195,8 @@ public class DownloadService extends Service {
                             sendMessageToClient(MSG_PROGRESS_UPDATE, 0, downloadSize, mTask.mUrl, null);
                         }
                     }
+                } else {
+                    exception = new RuntimeException("Http service response code = " + task.mConnection.getResponseCode());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
