@@ -73,6 +73,9 @@ public class DownloadService extends Service {
                     if (mTasks.containsKey(key)) {
                         stopDownload(mTasks.get(key));
                     }
+                    if (mTasks.isEmpty()) {
+                        stopSelf();
+                    }
                 } else if (null != receiver) {
                     DownloadTask task = mTasks.get(key);
                     if (null == task) {

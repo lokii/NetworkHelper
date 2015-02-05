@@ -113,6 +113,8 @@ public class HttpDownloader {
                     Log.d(TAG, "Remote resource was modified, restart download.");
                     breakpointOffset = 0;
                 }
+
+                MetaFileUtil.createMetaFile(outputPath, urlToDownload, fileLength, connection);
             } else {
                 retCode = ERR_HTTP_RESP;
             }
@@ -212,10 +214,8 @@ public class HttpDownloader {
             }
 
             if (null != connection) {
-                if (retCode != ERR_OK) {
-                    // Not download complete, try to generate meta file:
-                    MetaFileUtil.updateMetaFile(outputPath, urlToDownload, fileLength, connection);
-                } else {
+                if (retCode == ERR_OK) {
+                    // Download complete, remove the meta file:
                     MetaFileUtil.removeMetaFile(outputPath);
                 }
 

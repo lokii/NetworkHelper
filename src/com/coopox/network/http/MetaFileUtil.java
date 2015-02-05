@@ -117,7 +117,7 @@ public class MetaFileUtil {
         return null;
     }
 
-    public static void updateMetaFile(String outputPath, String urlToDownload,
+    public static void createMetaFile(String outputPath, String urlToDownload,
                                       int contentLength, HttpURLConnection connection) {
         int fileLength = contentLength > 0 ? contentLength : connection.getContentLength();
         String lastModified = connection.getHeaderField(LAST_MODIFIED);
