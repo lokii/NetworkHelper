@@ -3,6 +3,7 @@ package com.coopox.network.http;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -24,6 +25,30 @@ public class MetaFileUtil {
     public static final String META_URL = "Url";
 
     private static final String META_SUFFIX = ".meta";
+
+    public static int getDownloadedPercent(String url, String outputPath) {
+        Pair<Integer, Integer> downloadedAndTotalSize = getDownloadedAndTotalSize(url, outputPath);
+        if (null != downloadedAndTotalSize) {
+            int downloadedLen = downloadedAndTotalSize.first;
+            int totalSize = downloadedAndTotalSize.second;
+            return (int) ((downloadedLen / (float) totalSize) * 100);
+        }
+        return 0;
+    }
+
+    public static Pair<Integer, Integer> getDownloadedAndTotalSize(String url, String outputPath) {
+        Properties p = loadMetaProperties(url, outputPath);
+        if (null != p) {
+            File outputFile = new File(outputPath);
+            long downloadedLen = outputFile.length();
+            String contentLength = p.getProperty(MetaFileUtil.CONTENT_LENGTH);
+            if (TextUtils.isDigitsOnly(contentLength) && downloadedLen > 0) {
+                int totalSize = Integer.parseInt(contentLength);
+                return Pair.create((int)downloadedLen, totalSize);
+            }
+        }
+        return null;
+    }
 
     public static long getBreakpointStart(HttpURLConnection connection,
                                           String outputPath, Properties properties) {
@@ -60,7 +85,7 @@ public class MetaFileUtil {
         return false;
     }
 
-    public static Properties loadMetaProperties(String outputPath, String url) {
+    public static Properties loadMetaProperties(String url, String outputPath) {
         File outputFile = new File(outputPath);
         File metaFile = new File(outputPath + META_SUFFIX);
         if (outputFile.exists() && outputFile.isFile() &&

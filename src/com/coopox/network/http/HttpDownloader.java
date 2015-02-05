@@ -84,7 +84,7 @@ public class HttpDownloader {
             connection = (HttpURLConnection) url.openConnection();
             connection.setUseCaches(false);
 
-            Properties properties = MetaFileUtil.loadMetaProperties(outputPath, urlToDownload);
+            Properties properties = MetaFileUtil.loadMetaProperties(urlToDownload, outputPath);
             long breakpointOffset = 0;
             if (null != properties) {
                 breakpointOffset = MetaFileUtil.getBreakpointStart(connection, outputPath, properties);
