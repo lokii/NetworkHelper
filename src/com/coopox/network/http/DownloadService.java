@@ -79,7 +79,8 @@ public class DownloadService extends Service {
                         task = new DownloadTask(url, outputPath, receiver);
                         startDownload(task);
                     } else {
-                        receiver.send(IPCConstants.MSG_QUEUE_UP, null);
+                        receiver.send(IPCConstants.MSG_QUEUE_UP,
+                                createCommonBundle(url, outputPath));
                         Log.d(TAG, String.format("Task %s was already started", url));
                     }
                 } else {
@@ -95,18 +96,28 @@ public class DownloadService extends Service {
 
     private void startDownload(DownloadTask task) {
         if (null != task) {
+            task.mRunnable = new DownloadFileRunnable(this, task);
             mTasks.put(task.keyGen(), task);
 
-            task.mRunnable = new DownloadFileRunnable(this, task);
             mThreadPool.execute(task.mRunnable);
-            task.mReceiver.send(IPCConstants.MSG_WAITING, createCommonBundle(task.mUrl, task.mOutput));
+            task.mReceiver.send(IPCConstants.MSG_WAITING,
+                    createCommonBundle(task.mUrl, task.mOutput));
         }
     }
 
     private void stopDownload(DownloadTask task) {
-        if (null != task && null != task.mRunnable) {
+        if (null != task) {
+            if (null != task.mRunnable) {
                 // Stop when it's Downloading, it will remove self at end of download
                 task.mRunnable.stop();
+
+                // If task is not running, then remove it directly.
+                if (!task.mRunnable.isRunning()) {
+                    mTasks.remove(task.keyGen());
+                    task.mReceiver.send(IPCConstants.MSG_CANCELLED,
+                            createCommonBundle(task.mUrl, task.mOutput));
+                }
+            }
         }
     }
 
@@ -148,7 +159,8 @@ public class DownloadService extends Service {
                 clearTask();
                 checkWhetherStopService();
             } else {
-                mTask.mReceiver.send(IPCConstants.MSG_CANCELLED, null);
+                mTask.mReceiver.send(IPCConstants.MSG_CANCELLED,
+                        createCommonBundle(mTask.mUrl, mTask.mOutput));
                 clearTask();
                 checkWhetherStopService();
             }

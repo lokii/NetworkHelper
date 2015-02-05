@@ -43,6 +43,7 @@ public class DownloadIntentService extends IntentService implements HttpDownload
         if (null != intent && intent.getBooleanExtra(IPCConstants.EXTRA_CANCEL, false)) {
             mCancelCurrentTask = true;
         }
+        // TODO: send MSG_WAITING to client.
         return super.onStartCommand(intent, flags, startId);
     }
 

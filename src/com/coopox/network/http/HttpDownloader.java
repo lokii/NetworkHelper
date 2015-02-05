@@ -158,6 +158,9 @@ public class HttpDownloader {
 
             output.flush();
 
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            retCode = ERR_HOST_ERROR;
         } catch (SocketTimeoutException e) {
             e.printStackTrace();
             retCode = ERR_TIMEOUT;
@@ -167,15 +170,12 @@ public class HttpDownloader {
         } catch (SocketException e) {
             e.printStackTrace();
             retCode = ERR_SOCKET;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            retCode = ERR_RES_NOT_FOUND;
         } catch (ProtocolException e) {
             e.printStackTrace();
             retCode = ERR_PROTOCOL;
-        } catch (UnknownHostException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
-            retCode = ERR_HOST_ERROR;
+            retCode = ERR_RES_NOT_FOUND;
         } catch (IOException e) {
             e.printStackTrace();
             retCode = ERR_IO_ERROR;
