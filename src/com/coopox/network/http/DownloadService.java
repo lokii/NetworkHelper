@@ -99,6 +99,7 @@ public class DownloadService extends Service {
 
             task.mRunnable = new DownloadFileRunnable(this, task);
             mThreadPool.execute(task.mRunnable);
+            task.mReceiver.send(IPCConstants.MSG_WAITING, createCommonBundle(task.mUrl, task.mOutput));
         }
     }
 
@@ -107,6 +108,13 @@ public class DownloadService extends Service {
                 // Stop when it's Downloading, it will remove self at end of download
                 task.mRunnable.stop();
         }
+    }
+
+    private static Bundle createCommonBundle(String url, String outputPath) {
+        Bundle data = new Bundle();
+        data.putString(IPCConstants.KEY_URL, url);
+        data.putString(IPCConstants.KEY_OUTPUT, outputPath);
+        return data;
     }
 
     static class DownloadFileRunnable implements Runnable,
@@ -196,13 +204,6 @@ public class DownloadService extends Service {
             Bundle bundle = createCommonBundle(url, outputPath);
             bundle.putInt(IPCConstants.KEY_ERROR_CODE, errCode);
             mTask.mReceiver.send(IPCConstants.MSG_FAILED, bundle);
-        }
-
-        private Bundle createCommonBundle(String url, String outputPath) {
-            Bundle data = new Bundle();
-            data.putString(IPCConstants.KEY_URL, url);
-            data.putString(IPCConstants.KEY_OUTPUT, outputPath);
-            return data;
         }
 
         @Override
