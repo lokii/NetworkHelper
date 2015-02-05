@@ -10,7 +10,9 @@ import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 import com.coopox.network.http.DownloadService;
+import com.coopox.network.http.IPCConstants;
 
 import java.io.File;
 
@@ -18,22 +20,6 @@ public class MyActivity extends Activity implements View.OnClickListener {
 
     private ProgressBar mProgressBar;
     private EditText mEditText;
-    private Handler mResponseHandler = new Handler() {
-
-        @Override
-        public void handleMessage(Message msg) {
-            Log.d("handleMessage", "Download Message: " + msg.what);
-            switch (msg.what) {
-                case DownloadService.MSG_PROGRESS_UPDATE:
-                    Log.d("handleMessage", "Downloaded " + msg.arg2 + "%");
-                    mProgressBar.setProgress(msg.arg2);
-                    break;
-                case DownloadService.MSG_CANCELLED:
-                    mProgressBar.setProgress(0);
-                    break;
-            }
-        }
-    };
 
     private class DownloadReceiver extends ResultReceiver {
         public DownloadReceiver(Handler handler) {
@@ -44,13 +30,16 @@ public class MyActivity extends Activity implements View.OnClickListener {
         protected void onReceiveResult(int resultCode, Bundle resultData) {
             super.onReceiveResult(resultCode, resultData);
             Log.d("handleMessage", "Download Message: " + resultCode);
+            if (IPCConstants.MSG_UPDATE_PROGRESS != resultCode) {
+                Toast.makeText(MyActivity.this, "Download Message Code " + resultCode, Toast.LENGTH_SHORT).show();
+            }
             switch (resultCode) {
-                case DownloadService.MSG_UPDATE_PROGRESS:
-                    Number progress = (Number) resultData.get(DownloadService.KEY_PROGRESS);
+                case IPCConstants.MSG_UPDATE_PROGRESS:
+                    Number progress = (Number) resultData.get(IPCConstants.KEY_PROGRESS);
                     Log.d("handleMessage", "Downloaded " + progress + "%");
                     mProgressBar.setProgress(progress.intValue());
                     break;
-                case DownloadService.MSG_CANCELLED:
+                case IPCConstants.MSG_CANCELLED:
                     mProgressBar.setProgress(0);
                     break;
             }
@@ -80,10 +69,11 @@ public class MyActivity extends Activity implements View.OnClickListener {
                 if (URLUtil.isHttpUrl(url)) {
                     Intent intent = new Intent(this, DownloadService.class);
                     intent.setData(Uri.parse(url));
-                    File dir = getExternalCacheDir();
-                    File output = new File(dir, "test.tmp");
-                    intent.putExtra(DownloadService.EXTRA_OUTPUT_PATH, output.getPath());
-                    intent.putExtra(DownloadService.EXTRA_RECEIVER, new DownloadReceiver(new Handler()));
+                    String fileName = URLUtil.guessFileName(url, null, null);
+//                    File output = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+                    File output = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
+                    intent.putExtra(IPCConstants.EXTRA_OUTPUT_PATH, output.getPath());
+                    intent.putExtra(IPCConstants.EXTRA_RECEIVER, new DownloadReceiver(new Handler()));
                     startService(intent);
                 }
                 break;
@@ -91,11 +81,12 @@ public class MyActivity extends Activity implements View.OnClickListener {
                 if (URLUtil.isHttpUrl(url)) {
                     Intent intent = new Intent(this, DownloadService.class);
                     intent.setData(Uri.parse(url));
-                    intent.putExtra(DownloadService.EXTRA_CANCEL, true);
-                    File dir = getExternalCacheDir();
-                    File output = new File(dir, "test.tmp");
-                    intent.putExtra(DownloadService.EXTRA_OUTPUT_PATH, output.getPath());
-                    intent.putExtra(DownloadService.EXTRA_RECEIVER, new DownloadReceiver(new Handler()));
+                    intent.putExtra(IPCConstants.EXTRA_CANCEL, true);
+                    String fileName = URLUtil.guessFileName(url, null, null);
+//                    File output = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+                    File output = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
+                    intent.putExtra(IPCConstants.EXTRA_OUTPUT_PATH, output.getPath());
+                    intent.putExtra(IPCConstants.EXTRA_RECEIVER, new DownloadReceiver(new Handler()));
                     startService(intent);
                 }
                 break;
