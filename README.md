@@ -1,12 +1,12 @@
 # NetworkHelper
 Network Helper for Android.
 
-## HttpDownloader
+## Http Downloader
+A download helper that can support Breakpoint resume and Multi-tasking download.
 
 ### Download directly
 
-```
-
+```java
     /**
      * Save urlToDownload to file as outputPath directly.
      * Make sure to call this method in a worker thread for avoid block the UI thread.
@@ -16,8 +16,9 @@ Network Helper for Android.
      *                  the downloader will guess a name by URL.
      * @return ERR_OK if download successfully, else return a error code.
      **/
-    public static int downloadFile(String urlToDownload, String outputPath);    	
-   /**
+    public static int downloadFile(String urlToDownload, String outputPath);
+    
+    /**
      * Save urlToDownload to file as outputPath directly.
      * Make sure to call this method in a worker thread for avoid block the UI thread.
      * @param urlToDownload the HTTP URL to be downloaded.
@@ -30,12 +31,11 @@ Network Helper for Android.
     public static int downloadFile(String urlToDownload, String outputPath,
                             DownloadListener listener);
                             
-
 ```
 
 ### Parallel download by service
 
-```
+```java
     /**
      * Start download url to local file as outputPath via a Service.
      * Download task will be execute in a worker thread.
@@ -60,5 +60,5 @@ Network Helper for Android.
      **/
     public void stopDownloadInParallel(String url, String outputPath,
                                         DownloadListener listener);
-                                        
+                                      
 ```
