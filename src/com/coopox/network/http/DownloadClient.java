@@ -92,6 +92,16 @@ public class DownloadClient {
         mMainLoopHandler = new Handler(Looper.getMainLooper());
     }
 
+    /**
+     * Start download url to local file as outputPath via a Service.
+     * Download task will be execute in a worker thread.
+     * @param url the HTTP URL to be downloaded.
+     * @param outputPath Path to save the downloaded file. If the outputPath
+     *                  just is a directory(not contains file name) then
+     *                  the downloader will guess a name by URL.
+     * @param listener A listener for receive notify sent by downloader.
+     * @return ERR_OK if download successfully, else return a error code.
+     **/
     public void startDownloadInParallel(String url, String outputPath,
                                          DownloadListener listener) {
         if (null != mContext && URLUtil.isHttpUrl(url)
@@ -106,6 +116,15 @@ public class DownloadClient {
         }
     }
 
+    /**
+     * Stop a download task in DownloadService.
+     * @param url the HTTP URL to be downloaded.
+     * @param outputPath Path to save the downloaded file. If the outputPath
+     *                  just is a directory(not contains file name) then
+     *                  the downloader will guess a name by URL.
+     * @param listener A listener for receive notify sent by downloader.
+     * @return ERR_OK if download successfully, else return a error code.
+     **/
     public void stopDownloadInParallel(String url, String outputPath,
                                         DownloadListener listener) {
         if (null != mContext && URLUtil.isHttpUrl(url)

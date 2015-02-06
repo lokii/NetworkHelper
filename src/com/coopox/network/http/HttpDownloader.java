@@ -51,10 +51,29 @@ public class HttpDownloader {
     public static final int ERR_HOST_ERROR = -10;
 
 
+    /**
+     * Save urlToDownload to file as outputPath directly.
+     * Make sure to call this method in a worker thread for avoid block the UI thread.
+     * @param urlToDownload: the HTTP URL to be downloaded.
+     * @param outputPath: Path to save the downloaded file. If the outputPath
+     *                  just is a directory(not contains file name) then
+     *                  the downloader will guess a name by URL.
+     * @return ERR_OK if download successfully, else return a error code.
+     **/
     public static int downloadFile(String urlToDownload, String outputPath) {
         return downloadFile(urlToDownload, outputPath);
     }
 
+    /**
+     * Save urlToDownload to file as outputPath directly.
+     * Make sure to call this method in a worker thread for avoid block the UI thread.
+     * @param urlToDownload the HTTP URL to be downloaded.
+     * @param outputPath Path to save the downloaded file. If the outputPath
+     *                  just is a directory(not contains file name) then
+     *                  the downloader will guess a name by URL.
+     * @param listener A listener for receive notify sent by downloader.
+     * @return ERR_OK if download successfully, else return a error code.
+     **/
     public static int downloadFile(String urlToDownload, String outputPath,
                             DownloadListener listener) {
         return downloadFile(urlToDownload, outputPath, listener, null);
