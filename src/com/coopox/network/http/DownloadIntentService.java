@@ -1,16 +1,13 @@
 package com.coopox.network.http;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.ResultReceiver;
-import android.os.SystemClock;
-import android.text.TextUtils;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-
-import java.io.*;
-import java.net.*;
-import java.util.Properties;
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,8 +16,11 @@ import java.util.Properties;
  */
 public class DownloadIntentService extends IntentService implements HttpDownloader.DownloadListener, HttpDownloader.WorkFlowController {
     private static final String TAG = "DownloadService";
+    private static final int ID = 0x10ad;
 
     private volatile boolean mCancelCurrentTask;
+    private NotificationCompat.Builder mNotifyBuilder;
+    private NotificationManager mNotifyManager;
 
     public DownloadIntentService() {
         super("DownloadService");
@@ -40,8 +40,20 @@ public class DownloadIntentService extends IntentService implements HttpDownload
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (null != intent && intent.getBooleanExtra(IPCConstants.EXTRA_CANCEL, false)) {
-            mCancelCurrentTask = true;
+        if (null != intent) {
+            if (intent.getBooleanExtra(IPCConstants.EXTRA_CANCEL, false)) {
+                mCancelCurrentTask = true;
+            }
+        }
+        boolean foreground = intent.getBooleanExtra(IPCConstants.EXTRA_FOREGROUND, true);
+        if (foreground) {
+            mNotifyBuilder = new NotificationCompat.Builder(this)
+                    .setContentTitle("正在下载")
+                    .setContentText(intent.getDataString())
+                    .setSmallIcon(android.R.drawable.stat_sys_download);
+            startForeground(ID, mNotifyBuilder.build());
+            mNotifyManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         }
         // TODO: send MSG_WAITING to client.
         return super.onStartCommand(intent, flags, startId);
@@ -54,7 +66,8 @@ public class DownloadIntentService extends IntentService implements HttpDownload
             String urlToDownload = intent.getDataString();
             ResultReceiver receiver = intent.getParcelableExtra(IPCConstants.EXTRA_RECEIVER);
             if (null != outputPath && null != urlToDownload && null != receiver) {
-                HttpDownloader.downloadFile(outputPath, urlToDownload, this, this);
+                HttpDownloader.downloadFile(urlToDownload, outputPath, receiver,
+                        this, this);
             }
         }
     }
@@ -75,6 +88,10 @@ public class DownloadIntentService extends IntentService implements HttpDownload
             Bundle bundle = createCommonBundle(url, outputPath);
             bundle.putInt(IPCConstants.KEY_PROGRESS, progress);
             receiver.send(IPCConstants.MSG_UPDATE_PROGRESS, bundle);
+            if (null != mNotifyBuilder && null != mNotifyManager) {
+                mNotifyBuilder.setProgress(100, progress, progress > 100);
+                mNotifyManager.notify(ID, mNotifyBuilder.build());
+            }
         }
     }
 

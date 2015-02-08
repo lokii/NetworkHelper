@@ -21,5 +21,7 @@
         </activity>
         <service android:name="com.coopox.network.http.DownloadService"
                 android:exported="false"/>
+        <service android:name="com.coopox.network.http.DownloadIntentService"
+                 android:exported="false"/>
     </application>
 </manifest>

@@ -9,6 +9,7 @@ public class IPCConstants {
     public static final String EXTRA_OUTPUT_PATH = "OutputPath";
     public static final String EXTRA_RECEIVER = "Receiver";
     public static final String EXTRA_CANCEL = "Cancel";
+    public static final String EXTRA_FOREGROUND = "Foreground";
 
     public static final String KEY_URL = "kUrl";
     public static final String KEY_OUTPUT = "kOutput";

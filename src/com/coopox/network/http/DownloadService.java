@@ -1,9 +1,11 @@
 package com.coopox.network.http;
 
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.*;
+import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -21,6 +23,9 @@ public class DownloadService extends Service {
     private static final String TAG = "DownloadService";
 
     private static final int MAX_THREADS = 3;
+    private static final int ID = 0x10ada11;
+    private NotificationCompat.Builder mNotifyBuilder;
+    private NotificationManager mNotifyManager;
 
     class DownloadTask {
         public DownloadTask(String url, String output, ResultReceiver receiver) {
@@ -66,6 +71,7 @@ public class DownloadService extends Service {
             ResultReceiver receiver = intent.getParcelableExtra(IPCConstants.EXTRA_RECEIVER);
 
             boolean cancel = intent.getBooleanExtra(IPCConstants.EXTRA_CANCEL, false);
+            boolean foreground = intent.getBooleanExtra(IPCConstants.EXTRA_FOREGROUND, false);
 
             if (!TextUtils.isEmpty(url) && !TextUtils.isEmpty(outputPath)) {
                 String key = url + outputPath;
@@ -73,9 +79,7 @@ public class DownloadService extends Service {
                     if (mTasks.containsKey(key)) {
                         stopDownload(mTasks.get(key));
                     }
-                    if (mTasks.isEmpty()) {
-                        stopSelf();
-                    }
+                    cancelAndStopSelf();
                 } else if (null != receiver) {
                     DownloadTask task = mTasks.get(key);
                     if (null == task) {
@@ -86,6 +90,16 @@ public class DownloadService extends Service {
                                 createCommonBundle(url, outputPath));
                         Log.d(TAG, String.format("Task %s was already started", url));
                     }
+
+                    if (foreground) {
+                        mNotifyBuilder = new NotificationCompat.Builder(this)
+                                .setContentTitle("正在下载")
+                                .setContentText(url)
+                                .setSmallIcon(android.R.drawable.stat_sys_download);
+                        startForeground(ID, mNotifyBuilder.build());
+                        mNotifyManager =
+                                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    }
                 } else {
                     Log.e(TAG, "Invalid params for download task!");
                 }
@@ -95,6 +109,15 @@ public class DownloadService extends Service {
         }
 
         return START_NOT_STICKY;
+    }
+
+    private void cancelAndStopSelf() {
+        if (mTasks.isEmpty()) {
+            if (null != mNotifyBuilder && null != mNotifyManager) {
+                mNotifyManager.cancel(ID);
+            }
+            stopSelf();
+        }
     }
 
     private void startDownload(DownloadTask task) {
@@ -183,9 +206,7 @@ public class DownloadService extends Service {
             Context context = mContextRef.get();
             if (context instanceof DownloadService) {
                 DownloadService service = (DownloadService)context;
-                if (service.mTasks.isEmpty()) {
-                    service.stopSelf();
-                }
+                service.cancelAndStopSelf();
             }
         }
 
@@ -200,6 +221,14 @@ public class DownloadService extends Service {
             Bundle bundle = createCommonBundle(url, outputPath);
             bundle.putInt(IPCConstants.KEY_PROGRESS, progress);
             mTask.mReceiver.send(IPCConstants.MSG_UPDATE_PROGRESS, bundle);
+            Context context = mContextRef.get();
+            if (context instanceof DownloadService) {
+                DownloadService service = (DownloadService)context;
+                if (null != service.mNotifyBuilder && null != service.mNotifyManager) {
+                    service.mNotifyBuilder.setProgress(100, progress, progress > 100);
+                    service.mNotifyManager.notify(ID, service.mNotifyBuilder.build());
+                }
+            }
         }
 
         @Override
