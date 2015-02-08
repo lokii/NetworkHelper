@@ -62,3 +62,11 @@ A download helper that can support Breakpoint resume and Multi-tasking download.
                                         DownloadListener listener);
                                       
 ```
+
+### Add Service to AndroidManifest.xml
+
+```
+        <service android:name="com.coopox.network.http.DownloadService" />
+        <service android:name="com.coopox.network.http.DownloadIntentService" />
+
+```
