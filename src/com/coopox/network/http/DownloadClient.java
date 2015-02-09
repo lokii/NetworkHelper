@@ -23,7 +23,7 @@ public class DownloadClient {
     }
 
     private final Context mContext;
-    private Handler mMainLoopHandler;
+    private Handler mLoopHandler;
 
     private static class DownloadReceiver extends ResultReceiver {
         private DownloadListener mListener;
@@ -58,7 +58,7 @@ public class DownloadClient {
                     mListener.onUpdateProgress(url, outputPath, progress, null);
                     break;
                 case IPCConstants.MSG_SUCCESS:
-                    mListener.onDownloadStart(url, outputPath, null);
+                    mListener.onDownloadSuccess(url, outputPath, null);
                     break;
                 case IPCConstants.MSG_CANCELLED:
                     mListener.onDownloadCancelled(url, outputPath, null);
@@ -89,7 +89,12 @@ public class DownloadClient {
 
     public DownloadClient(Context context) {
         mContext = context;
-        mMainLoopHandler = new Handler(Looper.getMainLooper());
+        mLoopHandler = new Handler(Looper.getMainLooper());
+    }
+
+    public DownloadClient(Context context, Handler handler) {
+        mContext = context;
+        mLoopHandler = handler;
     }
 
     /**
@@ -111,7 +116,7 @@ public class DownloadClient {
 
             intent.putExtra(IPCConstants.EXTRA_OUTPUT_PATH, outputPath);
             intent.putExtra(IPCConstants.EXTRA_RECEIVER,
-                    new DownloadReceiver(mMainLoopHandler, listener));
+                    new DownloadReceiver(mLoopHandler, listener));
             mContext.startService(intent);
         }
     }
@@ -134,7 +139,7 @@ public class DownloadClient {
 
             intent.putExtra(IPCConstants.EXTRA_OUTPUT_PATH, outputPath);
             intent.putExtra(IPCConstants.EXTRA_RECEIVER,
-                    new DownloadReceiver(mMainLoopHandler, listener));
+                    new DownloadReceiver(mLoopHandler, listener));
             intent.putExtra(IPCConstants.EXTRA_CANCEL, true);
             mContext.startService(intent);
         }
@@ -149,7 +154,7 @@ public class DownloadClient {
 
             intent.putExtra(IPCConstants.EXTRA_OUTPUT_PATH, outputPath);
             intent.putExtra(IPCConstants.EXTRA_RECEIVER,
-                    new DownloadReceiver(mMainLoopHandler, listener));
+                    new DownloadReceiver(mLoopHandler, listener));
             mContext.startService(intent);
         }
     }

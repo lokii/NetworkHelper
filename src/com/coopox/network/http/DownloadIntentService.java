@@ -44,16 +44,16 @@ public class DownloadIntentService extends IntentService implements HttpDownload
             if (intent.getBooleanExtra(IPCConstants.EXTRA_CANCEL, false)) {
                 mCancelCurrentTask = true;
             }
-        }
-        boolean foreground = intent.getBooleanExtra(IPCConstants.EXTRA_FOREGROUND, true);
-        if (foreground) {
-            mNotifyBuilder = new NotificationCompat.Builder(this)
-                    .setContentTitle("正在下载")
-                    .setContentText(intent.getDataString())
-                    .setSmallIcon(android.R.drawable.stat_sys_download);
-            startForeground(ID, mNotifyBuilder.build());
-            mNotifyManager =
-                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            boolean foreground = intent.getBooleanExtra(IPCConstants.EXTRA_FOREGROUND, true);
+            if (foreground) {
+                mNotifyBuilder = new NotificationCompat.Builder(this)
+                        .setContentTitle("正在下载")
+                        .setContentText(intent.getDataString())
+                        .setSmallIcon(android.R.drawable.stat_sys_download);
+                startForeground(ID, mNotifyBuilder.build());
+                mNotifyManager =
+                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            }
         }
         // TODO: send MSG_WAITING to client.
         return super.onStartCommand(intent, flags, startId);
