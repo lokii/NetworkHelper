@@ -20,12 +20,14 @@ DownloadClient.DownloadListener {
     private ProgressBar mProgressBar;
     private EditText mEditText;
     private DownloadClient mDownloadClient;
+    private boolean mIsDownloading;
 
     @Override
     public void onDownloadStart(String url, String outputPath, Object data) {
         Toast.makeText(this,
                 String.format("Start download %s", url),
                 Toast.LENGTH_SHORT).show();
+        mIsDownloading = true;
     }
 
     @Override
@@ -39,6 +41,7 @@ DownloadClient.DownloadListener {
         Toast.makeText(this,
                 String.format("Download %s", url),
                 Toast.LENGTH_SHORT).show();
+        mIsDownloading = false;
     }
 
     @Override
@@ -47,6 +50,7 @@ DownloadClient.DownloadListener {
         Toast.makeText(this,
                 String.format("Cancel download %s", url),
                 Toast.LENGTH_SHORT).show();
+        mIsDownloading = false;
     }
 
     @Override
@@ -55,6 +59,7 @@ DownloadClient.DownloadListener {
         Toast.makeText(this,
                 String.format("Error(%d) when download %s", errCode, url),
                 Toast.LENGTH_SHORT).show();
+        mIsDownloading = false;
     }
 
     @Override
@@ -74,8 +79,10 @@ DownloadClient.DownloadListener {
         mDownloadClient = new DownloadClient(this);
         mProgressBar = (ProgressBar) findViewById(R.id.progress);
         mEditText = (EditText) findViewById(R.id.url_input);
-        Button start = (Button) findViewById(R.id.start);
-        start.setOnClickListener(this);
+        Button startSerial = (Button) findViewById(R.id.startSerial);
+        startSerial.setOnClickListener(this);
+        Button startParallel = (Button) findViewById(R.id.startParallel);
+        startParallel.setOnClickListener(this);
         Button stop = (Button) findViewById(R.id.stop);
         stop.setOnClickListener(this);
     }
@@ -84,19 +91,26 @@ DownloadClient.DownloadListener {
     public void onClick(View v) {
         String url = mEditText.getText().toString();
         switch (v.getId()) {
-            case R.id.start:
-            {
-                String fileName = URLUtil.guessFileName(url, null, null);
-                File output = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
-                mDownloadClient.startDownloadInParallel(url, output.getPath(), this);
-            }
+            case R.id.startParallel:
+                if (!mIsDownloading) {
+                    String fileName = URLUtil.guessFileName(url, null, null);
+                    File output = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
+                    mDownloadClient.startDownloadInParallel(url, output.getPath(), this);
+                }
+                break;
+            case R.id.startSerial:
+                if (!mIsDownloading) {
+                    String fileName = URLUtil.guessFileName(url, null, null);
+                    File output = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
+                    mDownloadClient.startDownloadInSerial(url, output.getPath(), this);
+                }
                 break;
             case R.id.stop:
-            {
-                String fileName = URLUtil.guessFileName(url, null, null);
-                File output = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
-                mDownloadClient.stopDownloadInParallel(url, output.getPath(), this);
-            }
+                if (mIsDownloading) {
+                    String fileName = URLUtil.guessFileName(url, null, null);
+                    File output = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName);
+                    mDownloadClient.stopDownloadInParallel(url, output.getPath(), this);
+                }
                 break;
         }
     }

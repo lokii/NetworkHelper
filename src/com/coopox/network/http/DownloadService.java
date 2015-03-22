@@ -23,7 +23,7 @@ public class DownloadService extends Service {
     private static final String TAG = "DownloadService";
 
     private static final int MAX_THREADS = 3;
-    private static final int ID = 0x10ada11;
+    private static int ID = 0x10ada11;
     private NotificationCompat.Builder mNotifyBuilder;
     private NotificationManager mNotifyManager;
 
@@ -32,6 +32,7 @@ public class DownloadService extends Service {
             mUrl = url;
             mOutput = output;
             mReceiver = receiver;
+            mNotifyID = ID++;
         }
 
         public String keyGen() {
@@ -42,6 +43,7 @@ public class DownloadService extends Service {
         public final String mOutput;
         public final ResultReceiver mReceiver;
         public DownloadFileRunnable mRunnable;
+        public final int mNotifyID;
     }
 
     private Hashtable<String, DownloadTask> mTasks = new Hashtable<String, DownloadTask>();
@@ -71,7 +73,7 @@ public class DownloadService extends Service {
             ResultReceiver receiver = intent.getParcelableExtra(IPCConstants.EXTRA_RECEIVER);
 
             boolean cancel = intent.getBooleanExtra(IPCConstants.EXTRA_CANCEL, false);
-            boolean foreground = intent.getBooleanExtra(IPCConstants.EXTRA_FOREGROUND, false);
+            boolean foreground = intent.getBooleanExtra(IPCConstants.EXTRA_FOREGROUND, true);
 
             if (!TextUtils.isEmpty(url) && !TextUtils.isEmpty(outputPath)) {
                 String key = url + outputPath;
@@ -93,10 +95,10 @@ public class DownloadService extends Service {
 
                     if (foreground) {
                         mNotifyBuilder = new NotificationCompat.Builder(this)
-                                .setContentTitle("正在下载")
+                                .setContentTitle("Downloading")
                                 .setContentText(url)
                                 .setSmallIcon(android.R.drawable.stat_sys_download);
-                        startForeground(ID, mNotifyBuilder.build());
+                        startForeground(task.mNotifyID, mNotifyBuilder.build());
                         mNotifyManager =
                                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                     }
@@ -113,9 +115,6 @@ public class DownloadService extends Service {
 
     private void cancelAndStopSelf() {
         if (mTasks.isEmpty()) {
-            if (null != mNotifyBuilder && null != mNotifyManager) {
-                mNotifyManager.cancel(ID);
-            }
             stopSelf();
         }
     }
@@ -226,7 +225,8 @@ public class DownloadService extends Service {
                 DownloadService service = (DownloadService)context;
                 if (null != service.mNotifyBuilder && null != service.mNotifyManager) {
                     service.mNotifyBuilder.setProgress(100, progress, progress > 100);
-                    service.mNotifyManager.notify(ID, service.mNotifyBuilder.build());
+                    service.mNotifyManager.notify(mTask.mNotifyID,
+                            service.mNotifyBuilder.build());
                 }
             }
         }
@@ -235,12 +235,14 @@ public class DownloadService extends Service {
         public void onDownloadSuccess(String url, String outputPath, Object data) {
             Bundle bundle = createCommonBundle(url, outputPath);
             mTask.mReceiver.send(IPCConstants.MSG_SUCCESS, bundle);
+            removeNotification();
         }
 
         @Override
         public void onDownloadCancelled(String url, String outputPath, Object data) {
             Bundle bundle = createCommonBundle(url, outputPath);
             mTask.mReceiver.send(IPCConstants.MSG_CANCELLED, bundle);
+            removeNotification();
         }
 
         @Override
@@ -248,11 +250,34 @@ public class DownloadService extends Service {
             Bundle bundle = createCommonBundle(url, outputPath);
             bundle.putInt(IPCConstants.KEY_ERROR_CODE, errCode);
             mTask.mReceiver.send(IPCConstants.MSG_FAILED, bundle);
+            notifyDownloadFailed();
         }
 
         @Override
         public boolean isCancelled(String url, String outputPath) {
             return mStoped;
+        }
+
+        private void removeNotification() {
+            Context context = mContextRef.get();
+            if (context instanceof DownloadService) {
+                DownloadService service = (DownloadService) context;
+                if (null != service.mNotifyManager) {
+                    service.mNotifyManager.cancel(mTask.mNotifyID);
+                }
+            }
+        }
+
+        private void notifyDownloadFailed() {
+            Context context = mContextRef.get();
+            if (context instanceof DownloadService) {
+                DownloadService service = (DownloadService) context;
+                if (null != service.mNotifyBuilder && null != service.mNotifyManager) {
+                    service.mNotifyBuilder.setContentTitle("Download Failed!");
+                    service.mNotifyManager.notify(mTask.mNotifyID,
+                            service.mNotifyBuilder.build());
+                }
+            }
         }
     }
 }

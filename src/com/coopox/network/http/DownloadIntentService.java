@@ -39,33 +39,23 @@ public class DownloadIntentService extends IntentService implements HttpDownload
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (null != intent) {
-            if (intent.getBooleanExtra(IPCConstants.EXTRA_CANCEL, false)) {
-                mCancelCurrentTask = true;
-            }
-            boolean foreground = intent.getBooleanExtra(IPCConstants.EXTRA_FOREGROUND, true);
-            if (foreground) {
-                mNotifyBuilder = new NotificationCompat.Builder(this)
-                        .setContentTitle("正在下载")
-                        .setContentText(intent.getDataString())
-                        .setSmallIcon(android.R.drawable.stat_sys_download);
-                startForeground(ID, mNotifyBuilder.build());
-                mNotifyManager =
-                        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            }
-        }
-        // TODO: send MSG_WAITING to client.
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    @Override
     protected void onHandleIntent(Intent intent) {
         if (null != intent) {
             String outputPath = intent.getStringExtra(IPCConstants.EXTRA_OUTPUT_PATH);
             String urlToDownload = intent.getDataString();
             ResultReceiver receiver = intent.getParcelableExtra(IPCConstants.EXTRA_RECEIVER);
             if (null != outputPath && null != urlToDownload && null != receiver) {
+                boolean foreground = intent.getBooleanExtra(IPCConstants.EXTRA_FOREGROUND, true);
+                if (foreground) {
+                    mNotifyBuilder = new NotificationCompat.Builder(this)
+                            .setContentTitle("Downloading")
+                            .setContentText(intent.getDataString())
+                            .setSmallIcon(android.R.drawable.stat_sys_download);
+                    startForeground(ID, mNotifyBuilder.build());
+                    mNotifyManager =
+                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                }
+
                 HttpDownloader.downloadFile(urlToDownload, outputPath, receiver,
                         this, this);
             }

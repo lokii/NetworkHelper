@@ -16,10 +16,15 @@
             android:layout_height="wrap_content"
             android:inputType="textUri" />
     <Button
-            android:id="@+id/start"
+            android:id="@+id/startSerial"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="StartDownload"/>
+            android:text="SerialDownload"/>
+    <Button
+            android:id="@+id/startParallel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ParallelDownload"/>
     <Button
             android:id="@+id/stop"
             android:layout_width="wrap_content"
